@@ -9,7 +9,7 @@ import (
 )
 
 // function performs right padding using zeros to the size of the blockSize param.
-func paddingZeros(data []byte, blockSize int) []byte {
+func PaddingZeros(data []byte, blockSize int) []byte {
 	dataLength := len(data)
 	padding := bytes.Repeat([]byte{0}, blockSize-dataLength%blockSize)
 	data = append(data, padding...)
@@ -18,7 +18,7 @@ func paddingZeros(data []byte, blockSize int) []byte {
 }
 
 // function performs right unpadding by removing all zeros from the right
-func unpaddingZeros(data []byte) []byte {
+func UnpaddingZeros(data []byte) []byte {
 	data = bytes.TrimFunc(data, func(r rune) bool {
 		return r == rune(0)
 	})
@@ -28,7 +28,7 @@ func unpaddingZeros(data []byte) []byte {
 
 // function performs xor operation on provided slices of bytes.
 // Slices need to be of the same length
-func xorByteSlices(b1, b2 []byte) ([]byte, error) {
+func XorByteSlices(b1, b2 []byte) ([]byte, error) {
 	if len(b1) != len(b2) {
 		return nil, errors.New("byte slices length mismatch")
 	}
@@ -43,7 +43,7 @@ func xorByteSlices(b1, b2 []byte) ([]byte, error) {
 }
 
 // function generates random slice of bytes of the length n
-func genRandomHex(n int) ([]byte, error) {
+func GenRandomHex(n int) ([]byte, error) {
 	randomBytes := make([]byte, n)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
@@ -53,8 +53,8 @@ func genRandomHex(n int) ([]byte, error) {
 	return randomBytes, nil
 }
 
-// functions calculates 3DES (but double length) Key Check Value
-func calculateKCV(key []byte) ([]byte, error) {
+// function calculates double-length 3DES Key Check Value
+func CalculateKCV(key []byte) ([]byte, error) {
 	fakeData, err := hex.DecodeString("00000000000000000000000000000000")
 	if err != nil {
 		return nil, err
@@ -65,15 +65,15 @@ func calculateKCV(key []byte) ([]byte, error) {
 	k1 := tripleKey[:8]
 	k2 := tripleKey[8:]
 
-	buffer1, err := encrypt(fakeData, k1)
+	buffer1, err := Encrypt(fakeData, k1)
 	if err != nil {
 		return nil, err
 	}
-	buffer2, err := decrypt(buffer1, k2)
+	buffer2, err := Decrypt(buffer1, k2)
 	if err != nil {
 		return nil, err
 	}
-	kcv, err := encrypt(buffer2, k1)
+	kcv, err := Encrypt(buffer2, k1)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func calculateKCV(key []byte) ([]byte, error) {
 }
 
 // function performs standard single DES encryption
-func encrypt(clearData, key []byte) ([]byte, error) {
+func Encrypt(clearData, key []byte) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func encrypt(clearData, key []byte) ([]byte, error) {
 	bs := block.BlockSize()
 
 	if len(clearData)%bs != 0 {
-		clearData = paddingZeros(clearData, bs)
+		clearData = PaddingZeros(clearData, bs)
 	}
 
 	output := make([]byte, len(clearData))
@@ -107,7 +107,7 @@ func encrypt(clearData, key []byte) ([]byte, error) {
 }
 
 // function performs standard single DES decryption
-func decrypt(encryptedData, key []byte) ([]byte, error) {
+func Decrypt(encryptedData, key []byte) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ func decrypt(encryptedData, key []byte) ([]byte, error) {
 		tmp = tmp[bs:]
 	}
 
-	return unpaddingZeros(output), nil
+	return UnpaddingZeros(output), nil
 }
 
 // function performs DESede encryption with padding
@@ -135,18 +135,18 @@ func DESedeECBEnrypt(clearData, key []byte) ([]byte, error) {
 	k3 := tripleKey[16:]
 
 	// ecryption process
-	// first we need to encrypt the original data with first part of the key (first 8 bytes).
-	buffer1, err := encrypt(clearData, k1)
+	// first we need to Encrypt the original data with first part of the key (first 8 bytes).
+	buffer1, err := Encrypt(clearData, k1)
 	if err != nil {
 		return nil, err
 	}
-	// now, we need to decrypt data encrypted in first step using the second part fo the key (8-16 bytes)
-	buffer2, err := decrypt(buffer1, k2)
+	// now, we need to Decrypt data encrypted in first step using the second part fo the key (8-16 bytes)
+	buffer2, err := Decrypt(buffer1, k2)
 	if err != nil {
 		return nil, err
 	}
 	// now we need to encrypte the result from the above step with third part of the key (16: bytes)
-	result, err := encrypt(buffer2, k3)
+	result, err := Encrypt(buffer2, k3)
 	if err != nil {
 		return nil, err
 	}
@@ -164,17 +164,17 @@ func DESedeECBDecrypt(encData, key []byte) ([]byte, error) {
 
 	// decryption process
 	// first we need to decrypte provided data with the last part of the key (16: bytes)
-	buffer1, err := decrypt(encData, k3)
+	buffer1, err := Decrypt(encData, k3)
 	if err != nil {
 		return nil, err
 	}
-	// now we need to encrypt buffer1 using second part of the key (8-16 bytes)
-	buffer2, err := encrypt(buffer1, k2)
+	// now we need to Encrypt buffer1 using second part of the key (8-16 bytes)
+	buffer2, err := Encrypt(buffer1, k2)
 	if err != nil {
 		return nil, err
 	}
-	// now we need to decrypt buffer2 with the first part of the key (:8 bytes)
-	result, err := decrypt(buffer2, k1)
+	// now we need to Decrypt buffer2 with the first part of the key (:8 bytes)
+	result, err := Decrypt(buffer2, k1)
 	if err != nil {
 		return nil, err
 	}
@@ -183,23 +183,23 @@ func DESedeECBDecrypt(encData, key []byte) ([]byte, error) {
 }
 
 // function performs splitting double-length 3DES key into 3 components
-func splitKey(key []byte) ([][]byte, error) {
+func SplitKey(key []byte) ([][]byte, error) {
 	var keyComponents [][]byte
 
-	kc1, err := genRandomHex(16)
+	kc1, err := GenRandomHex(16)
 	if err != nil {
 		return nil, err
 	}
-	kc2, err := genRandomHex(16)
+	kc2, err := GenRandomHex(16)
 	if err != nil {
 		return nil, err
 	}
 
-	interim, err := xorByteSlices(key, kc1)
+	interim, err := XorByteSlices(key, kc1)
 	if err != nil {
 		return nil, err
 	}
-	kc3, err := xorByteSlices(interim, kc2)
+	kc3, err := XorByteSlices(interim, kc2)
 	if err != nil {
 		return nil, err
 	}
@@ -212,16 +212,16 @@ func splitKey(key []byte) ([][]byte, error) {
 }
 
 // function combines 3 components into double-length 3DES key
-func combineKey(keyComponents [][]byte) ([]byte, error) {
+func CombineKey(keyComponents [][]byte) ([]byte, error) {
 	kc1 := keyComponents[0]
 	kc2 := keyComponents[1]
 	kc3 := keyComponents[2]
 
-	interim, err := xorByteSlices(kc3, kc2)
+	interim, err := XorByteSlices(kc3, kc2)
 	if err != nil {
 		return nil, err
 	}
-	key, err := xorByteSlices(interim, kc1)
+	key, err := XorByteSlices(interim, kc1)
 	if err != nil {
 		return nil, err
 	}
