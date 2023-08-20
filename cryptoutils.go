@@ -8,7 +8,7 @@ import (
 	"errors"
 )
 
-// function performs right padding using zeros to the size of the blockSize param.
+// PaddingZeros function performs right padding using zeros to the size of the blockSize param.
 func PaddingZeros(data []byte, blockSize int) []byte {
 	dataLength := len(data)
 	padding := bytes.Repeat([]byte{0}, blockSize-dataLength%blockSize)
@@ -17,7 +17,7 @@ func PaddingZeros(data []byte, blockSize int) []byte {
 	return data
 }
 
-// function performs right unpadding by removing all zeros from the right
+// UnpaddingZeros function performs right unpadding by removing all zeros from the right
 func UnpaddingZeros(data []byte) []byte {
 	data = bytes.TrimFunc(data, func(r rune) bool {
 		return r == rune(0)
@@ -26,7 +26,7 @@ func UnpaddingZeros(data []byte) []byte {
 	return data
 }
 
-// function performs xor operation on provided slices of bytes.
+// XorByteSlices function performs xor operation on provided slices of bytes.
 // Slices need to be of the same length
 func XorByteSlices(b1, b2 []byte) ([]byte, error) {
 	if len(b1) != len(b2) {
@@ -42,7 +42,7 @@ func XorByteSlices(b1, b2 []byte) ([]byte, error) {
 	return result, nil
 }
 
-// function generates random slice of bytes of the length n
+// GenRandomHex function generates random slice of bytes of the length n
 func GenRandomHex(n int) ([]byte, error) {
 	randomBytes := make([]byte, n)
 	_, err := rand.Read(randomBytes)
@@ -53,14 +53,15 @@ func GenRandomHex(n int) ([]byte, error) {
 	return randomBytes, nil
 }
 
-// function calculates double-length 3DES Key Check Value
+// CalculateKCV function calculates double-length 3DES Key Check Value
 func CalculateKCV(key []byte) ([]byte, error) {
 	fakeData, err := hex.DecodeString("00000000000000000000000000000000")
 	if err != nil {
 		return nil, err
 	}
 
-	tripleKey := make([]byte, 16, 16)
+	// tripleKey := make([]byte, 16, 16)
+	tripleKey := make([]byte, 16)
 	copy(tripleKey, key)
 	k1 := tripleKey[:8]
 	k2 := tripleKey[8:]
@@ -81,7 +82,7 @@ func CalculateKCV(key []byte) ([]byte, error) {
 	return kcv[:3], nil
 }
 
-// function performs standard single DES encryption
+// Encrypt function performs standard single DES encryption
 func Encrypt(clearData, key []byte) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
@@ -106,7 +107,7 @@ func Encrypt(clearData, key []byte) ([]byte, error) {
 	return output, nil
 }
 
-// function performs standard single DES decryption
+// Decrypt function performs standard single DES decryption
 func Decrypt(encryptedData, key []byte) ([]byte, error) {
 	block, err := des.NewCipher(key)
 	if err != nil {
@@ -126,26 +127,27 @@ func Decrypt(encryptedData, key []byte) ([]byte, error) {
 	return UnpaddingZeros(output), nil
 }
 
-// function performs DESede encryption with padding
+// DESedeECBEnrypt function performs DESede encryption with padding
 func DESedeECBEnrypt(clearData, key []byte) ([]byte, error) {
-	tripleKey := make([]byte, 24, 24)
+	// tripleKey := make([]byte, 24, 24)
+	tripleKey := make([]byte, 24)
 	copy(tripleKey, key)
 	k1 := tripleKey[:8]
 	k2 := tripleKey[8:16]
 	k3 := tripleKey[16:]
 
-	// ecryption process
+	// encryption process
 	// first we need to Encrypt the original data with first part of the key (first 8 bytes).
 	buffer1, err := Encrypt(clearData, k1)
 	if err != nil {
 		return nil, err
 	}
-	// now, we need to Decrypt data encrypted in first step using the second part fo the key (8-16 bytes)
+	// now, we need to Decrypt data encrypted in first step using the second part of the key (8-16 bytes)
 	buffer2, err := Decrypt(buffer1, k2)
 	if err != nil {
 		return nil, err
 	}
-	// now we need to encrypte the result from the above step with third part of the key (16: bytes)
+	// now we need to encrypt the result from the above step with third part of the key (16: bytes)
 	result, err := Encrypt(buffer2, k3)
 	if err != nil {
 		return nil, err
@@ -154,16 +156,17 @@ func DESedeECBEnrypt(clearData, key []byte) ([]byte, error) {
 	return result, nil
 }
 
-// function performs DESede decryption with unpadding
+// DESedeECBDecrypt function performs DESede decryption with unpadding
 func DESedeECBDecrypt(encData, key []byte) ([]byte, error) {
-	tripleKey := make([]byte, 24, 24)
+	// tripleKey := make([]byte, 24, 24)
+	tripleKey := make([]byte, 24)
 	copy(tripleKey, key)
 	k1 := tripleKey[:8]
 	k2 := tripleKey[8:16]
 	k3 := tripleKey[16:]
 
 	// decryption process
-	// first we need to decrypte provided data with the last part of the key (16: bytes)
+	// first we need to decrypt provided data with the last part of the key (16: bytes)
 	buffer1, err := Decrypt(encData, k3)
 	if err != nil {
 		return nil, err
@@ -182,7 +185,7 @@ func DESedeECBDecrypt(encData, key []byte) ([]byte, error) {
 	return result, nil
 }
 
-// function performs splitting double-length 3DES key into 3 components
+// SplitKey function performs splitting double-length 3DES key into 3 components
 func SplitKey(key []byte) ([][]byte, error) {
 	var keyComponents [][]byte
 
@@ -211,7 +214,7 @@ func SplitKey(key []byte) ([][]byte, error) {
 	return keyComponents, nil
 }
 
-// function combines 3 components into double-length 3DES key
+// CombineKey function combines 3 components into double-length 3DES key
 func CombineKey(keyComponents [][]byte) ([]byte, error) {
 	kc1 := keyComponents[0]
 	kc2 := keyComponents[1]
