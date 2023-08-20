@@ -27,7 +27,7 @@ func UnpaddingZeros(data []byte) []byte {
 }
 
 // XorByteSlices function performs xor operation on provided slices of bytes.
-// Slices need to be of the same length
+// Slices need to be of the same length.
 func XorByteSlices(b1, b2 []byte) ([]byte, error) {
 	if len(b1) != len(b2) {
 		return nil, errors.New("byte slices length mismatch")
